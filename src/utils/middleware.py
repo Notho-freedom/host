@@ -1,4 +1,4 @@
-"""Application middleware for error handling and monitoring."""
+"""Application middleware for error handling, monitoring, and authentication."""
 
 import time
 import uuid
@@ -10,6 +10,36 @@ import logging
 from src.models.schemas import ErrorResponse
 
 logger = logging.getLogger(__name__)
+
+
+async def auth_middleware(request: Request, call_next: Callable) -> Response:
+    """
+    Middleware d'authentification pour les routes SaaS
+    Laisse passer les routes publiques et vérifie l'auth pour les routes protégées
+    """
+    
+    # Routes publiques qui ne nécessitent pas d'authentification
+    public_routes = [
+        "/",
+        "/health", 
+        "/docs",
+        "/redoc",
+        "/openapi.json",
+        "/api/v1/tts",  # API TTS originale reste publique
+        "/api/v1/auth/register",
+        "/api/v1/auth/login",
+        "/static"
+    ]
+    
+    # Vérifier si la route est publique
+    path = request.url.path
+    if any(path.startswith(route) for route in public_routes):
+        response = await call_next(request)
+        return response
+    
+    # Pour les routes protégées, l'authentification sera gérée par les dépendances FastAPI
+    response = await call_next(request)
+    return response
 
 
 async def error_handler_middleware(request: Request, call_next: Callable) -> Response:

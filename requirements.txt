@@ -19,6 +19,18 @@ pytest-cov>=4.1.0
 httpx>=0.25.0  # For testing client
 requests>=2.31.0  # For legacy test scripts
 
+# SaaS Authentication and Security
+redis>=5.0.0
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+python-multipart>=0.0.6
+
+# Web Dashboard
+jinja2>=3.1.2
+
+# Payment Processing (Stripe)
+stripe>=7.8.0
+
 # Optional: Audio playback for tests
 pygame>=2.5.0  # Optional, for audio testing
 

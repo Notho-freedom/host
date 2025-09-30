@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation API - TTS SaaS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-mic"></i> TTS SaaS
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/dashboard">
+                    <i class="bi bi-arrow-left"></i> Retour au Dashboard
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-3">
+                <!-- Navigation -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6>Navigation</h6>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <a href="#authentication" class="list-group-item list-group-item-action">Authentification</a>
+                        <a href="#endpoints" class="list-group-item list-group-item-action">Points d'accès</a>
+                        <a href="#examples" class="list-group-item list-group-item-action">Exemples</a>
+                        <a href="#sdks" class="list-group-item list-group-item-action">SDKs</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-9">
+                <!-- API Key -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="bi bi-key"></i> Votre Clé API</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="{{ api_key }}" readonly id="apiKey">
+                            <button class="btn btn-outline-secondary" onclick="copyApiKey()">
+                                <i class="bi bi-clipboard"></i> Copier
+                            </button>
+                        </div>
+                        <small class="text-muted">
+                            <i class="bi bi-shield-lock"></i> Gardez cette clé secrète et ne la partagez jamais.
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Authentication -->
+                <div class="card mb-4" id="authentication">
+                    <div class="card-header">
+                        <h5>Authentification</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Utilisez votre token JWT dans l'en-tête Authorization de vos requêtes :</p>
+                        <pre><code class="language-http">Authorization: Bearer YOUR_JWT_TOKEN</code></pre>
+                        
+                        <h6 class="mt-3">Obtenir un token :</h6>
+                        <pre><code class="language-bash">curl -X POST {{ base_url }}/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "your@email.com", "password": "yourpassword"}'</code></pre>
+                    </div>
+                </div>
+
+                <!-- Endpoints -->
+                <div class="card mb-4" id="endpoints">
+                    <div class="card-header">
+                        <h5>Points d'accès API</h5>
+                    </div>
+                    <div class="card-body">
+                        
+                        <!-- TTS Endpoint -->
+                        <div class="border-start border-4 border-success ps-3 mb-4">
+                            <h6><span class="badge bg-success">POST</span> /api/v1/saas/tts</h6>
+                            <p>Génère un fichier audio à partir de texte</p>
+                            
+                            <strong>Paramètres :</strong>
+                            <ul>
+                                <li><code>text</code> (string, requis) : Le texte à synthétiser</li>
+                                <li><code>voice</code> (string, optionnel) : La voix à utiliser (défaut: auto-détectée)</li>
+                                <li><code>rate</code> (string, optionnel) : Vitesse de lecture (+/-50%)</li>
+                            </ul>
+                            
+                            <strong>Réponse :</strong> Fichier audio MP3
+                        </div>
+
+                        <!-- Usage Endpoint -->
+                        <div class="border-start border-4 border-info ps-3 mb-4">
+                            <h6><span class="badge bg-info">GET</span> /api/v1/saas/usage</h6>
+                            <p>Récupère vos statistiques d'utilisation</p>
+                            
+                            <strong>Réponse :</strong>
+                            <pre><code class="language-json">{
+  "chars_used_this_month": 15420,
+  "chars_limit": 50000,
+  "requests_today": 45,
+  "tier": "starter"
+}</code></pre>
+                        </div>
+
+                        <!-- Voices Endpoint -->
+                        <div class="border-start border-4 border-warning ps-3 mb-4">
+                            <h6><span class="badge bg-warning">GET</span> /api/v1/saas/voices</h6>
+                            <p>Liste les voix disponibles pour votre plan</p>
+                            
+                            <strong>Réponse :</strong>
+                            <pre><code class="language-json">[
+  {
+    "name": "fr-FR-DeniseNeural",
+    "display_name": "Denise (Français)",
+    "gender": "Female",
+    "locale": "fr-FR"
+  }
+]</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Examples -->
+                <div class="card mb-4" id="examples">
+                    <div class="card-header">
+                        <h5>Exemples d'utilisation</h5>
+                    </div>
+                    <div class="card-body">
+                        
+                        <h6>Python</h6>
+                        <pre><code class="language-python">import requests
+
+url = "{{ base_url }}/saas/tts"
+headers = {
+    "Authorization": "Bearer YOUR_JWT_TOKEN",
+    "Content-Type": "application/json"
+}
+data = {
+    "text": "Bonjour, ceci est un test de synthèse vocale.",
+    "voice": "fr-FR-DeniseNeural"
+}
+
+response = requests.post(url, headers=headers, json=data)
+
+if response.status_code == 200:
+    with open("audio.mp3", "wb") as f:
+        f.write(response.content)
+    print("Audio généré avec succès !")
+</code></pre>
+
+                        <h6 class="mt-4">JavaScript</h6>
+                        <pre><code class="language-javascript">const response = await fetch('{{ base_url }}/saas/tts', {
+    method: 'POST',
+    headers: {
+        'Authorization': 'Bearer YOUR_JWT_TOKEN',
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        text: 'Bonjour, ceci est un test.',
+        voice: 'fr-FR-DeniseNeural'
+    })
+});
+
+if (response.ok) {
+    const blob = await response.blob();
+    const audio = new Audio(URL.createObjectURL(blob));
+    audio.play();
+}
+</code></pre>
+
+                        <h6 class="mt-4">cURL</h6>
+                        <pre><code class="language-bash">curl -X POST {{ base_url }}/saas/tts \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Bonjour monde", "voice": "fr-FR-DeniseNeural"}' \
+  --output audio.mp3
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- SDKs -->
+                <div class="card mb-4" id="sdks">
+                    <div class="card-header">
+                        <h5>SDKs et Bibliothèques</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Bibliothèques officielles disponibles :</p>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6><i class="bi bi-code-slash"></i> Python SDK</h6>
+                                        <pre><code>pip install tts-saas-python</code></pre>
+                                        <small class="text-muted">Bientôt disponible</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6><i class="bi bi-braces"></i> JavaScript SDK</h6>
+                                        <pre><code>npm install tts-saas-js</code></pre>
+                                        <small class="text-muted">Bientôt disponible</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script>
+        function copyApiKey() {
+            const apiKey = document.getElementById('apiKey');
+            apiKey.select();
+            document.execCommand('copy');
+            
+            const btn = event.target.closest('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-check"></i> Copié !';
+            btn.classList.remove('btn-outline-secondary');
+            btn.classList.add('btn-success');
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-outline-secondary');
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
