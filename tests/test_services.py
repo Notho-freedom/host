@@ -12,12 +12,15 @@ class TestTTSService:
     """Test TTS service functionality."""
 
     @pytest.mark.asyncio
-    async def test_get_all_voices_cached(self, tts_service):
+    async def test_get_all_voices_cached(self):
         """Test voice retrieval with caching."""
         mock_voices = [
             {"Name": "fr-FR-DeniseNeural", "Gender": "Female", "Locale": "fr-FR"},
             {"Name": "en-US-AriaNeural", "Gender": "Female", "Locale": "en-US"}
         ]
+        
+        # Clear cache first
+        await tts_service.voice_cache.clear()
         
         with patch('edge_tts.list_voices') as mock_edge:
             mock_edge.return_value = mock_voices
@@ -34,7 +37,7 @@ class TestTTSService:
             mock_edge.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_get_voices_by_language_french(self, tts_service):
+    async def test_get_voices_by_language_french(self):
         """Test filtering voices by French language."""
         mock_voices = [
             {
@@ -71,11 +74,11 @@ class TestTTSService:
             assert "fr-CA-SylvieNeural" in french_voice_names
 
     @pytest.mark.asyncio
-    async def test_detect_language_french(self, tts_service):
+    async def test_detect_language_french(self):
         """Test language detection for French text."""
         french_text = "Bonjour, comment allez-vous aujourd'hui?"
         
-        with patch('langdetect.detect') as mock_detect:
+        with patch('src.services.tts_service.detect') as mock_detect:
             mock_detect.return_value = "fr"
             
             result = await tts_service.detect_language(french_text)
@@ -83,16 +86,16 @@ class TestTTSService:
             mock_detect.assert_called_once_with(french_text)
 
     @pytest.mark.asyncio
-    async def test_detect_language_fallback(self, tts_service):
+    async def test_detect_language_fallback(self):
         """Test language detection fallback on error."""
-        with patch('langdetect.detect') as mock_detect:
+        with patch('src.services.tts_service.detect') as mock_detect:
             mock_detect.side_effect = Exception("Detection failed")
             
             result = await tts_service.detect_language("Some text")
             assert result == "fr"  # Should fallback to French
 
     @pytest.mark.asyncio
-    async def test_detect_language_short_text(self, tts_service):
+    async def test_detect_language_short_text(self):
         """Test language detection with very short text."""
         short_text = "Hi"
         
@@ -100,7 +103,7 @@ class TestTTSService:
         assert result == "fr"  # Should fallback for short text
 
     @pytest.mark.asyncio
-    async def test_check_voice_availability_exists(self, tts_service):
+    async def test_check_voice_availability_exists(self):
         """Test voice availability check for existing voice."""
         mock_voices = [
             {"ShortName": "fr-FR-DeniseNeural", "Name": "Microsoft Server Speech Text to Speech Voice (fr-FR, DeniseNeural)"}
@@ -113,7 +116,7 @@ class TestTTSService:
             assert result is True
 
     @pytest.mark.asyncio
-    async def test_check_voice_availability_not_exists(self, tts_service):
+    async def test_check_voice_availability_not_exists(self):
         """Test voice availability check for non-existing voice."""
         mock_voices = [
             {"ShortName": "fr-FR-DeniseNeural"}
@@ -174,11 +177,14 @@ class TestTTSService:
                 assert isinstance(result, BytesIO)
 
     @pytest.mark.asyncio
-    async def test_generate_audio_caching(self, tts_service):
+    async def test_generate_audio_caching(self):
         """Test audio generation caching."""
         text = "Hello world"
         voice = "en-US-AriaNeural"
         mock_audio_data = b"fake_audio_content"
+        
+        # Clear cache first
+        await tts_service.audio_cache.clear()
         
         # First call - should generate audio
         async def mock_stream2():
@@ -204,7 +210,7 @@ class TestTTSService:
                 mock_edge_communicate.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_get_service_stats(self, tts_service):
+    async def test_get_service_stats(self):
         """Test service statistics retrieval."""
         with patch.object(tts_service, 'get_all_voices') as mock_voices:
             mock_voices.return_value = [{"name": "voice1"}, {"name": "voice2"}]
